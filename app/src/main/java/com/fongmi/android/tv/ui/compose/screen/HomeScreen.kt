@@ -221,7 +221,7 @@ fun HomeScreen(
                         val category = categories[page]
                         // 每个分类的内容页面
                         CategoryContentPage(
-                            siteKey = VodConfig.get().getHome().getKey(),
+                            siteKey = VodConfig.get().getHome()?.getKey() ?: "",
                             category = category,
                             result = result,
                             onVodClick = onNavigateToVideo

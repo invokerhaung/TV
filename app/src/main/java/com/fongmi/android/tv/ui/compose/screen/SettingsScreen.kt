@@ -108,17 +108,17 @@ fun SettingsScreen(
             SettingsSection(title = "配置管理") {
                 SettingsItem(
                     title = "视频配置",
-                    subtitle = VodConfig.get().getConfig().getUrl().ifEmpty { "未设置" },
+                    subtitle = VodConfig.get().getConfig()?.getUrl()?.ifEmpty { "未设置" } ?: "未设置",
                     onClick = { showVodConfigDialog = true }
                 )
                 SettingsItem(
                     title = "直播配置",
-                    subtitle = LiveConfig.get().getConfig().getUrl().ifEmpty { "未设置" },
+                    subtitle = LiveConfig.get().getConfig()?.getUrl()?.ifEmpty { "未设置" } ?: "未设置",
                     onClick = { showLiveConfigDialog = true }
                 )
                 SettingsItem(
                     title = "壁纸配置",
-                    subtitle = WallConfig.get().getConfig().getUrl().ifEmpty { "未设置" },
+                    subtitle = WallConfig.get().getConfig()?.getUrl()?.ifEmpty { "未设置" } ?: "未设置",
                     onClick = { showWallConfigDialog = true }
                 )
             }
@@ -127,12 +127,12 @@ fun SettingsScreen(
             SettingsSection(title = "站点选择") {
                 SettingsItem(
                     title = "视频站点",
-                    subtitle = VodConfig.get().getHome().getName().ifEmpty { "默认" },
+                    subtitle = VodConfig.get().getHome()?.getName()?.ifEmpty { "默认" } ?: "默认",
                     onClick = { showSiteDialog = true }
                 )
                 SettingsItem(
                     title = "直播源",
-                    subtitle = LiveConfig.get().getHome().getName().ifEmpty { "默认" },
+                    subtitle = LiveConfig.get().getHome()?.getName()?.ifEmpty { "默认" } ?: "默认",
                     onClick = { showLiveDialog = true }
                 )
             }

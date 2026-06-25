@@ -214,7 +214,7 @@ fun VideoScreen(
 
     LaunchedEffect(vodId) {
         siteViewModel.detailContent(
-            VodConfig.get().getHome().getKey(),
+            VodConfig.get().getHome()?.getKey() ?: "",
             vodId
         )
     }
@@ -1078,7 +1078,7 @@ fun VideoScreen(
                     val currentFlag = currentFlags.getOrNull(selectedFlagIndex)
                     val currentEpisode = currentFlag?.getEpisodes()?.getOrNull(selectedEpisodeIndex)
                     if (currentFlag != null && currentEpisode != null) {
-                        val key = VodConfig.get().getHome().getKey()
+                        val key = VodConfig.get().getHome()?.getKey() ?: ""
                         siteViewModel.playerContent(key, currentFlag.getFlag(), currentEpisode.getUrl())
                     }
                     showQualityDialog = false
@@ -1101,7 +1101,7 @@ fun VideoScreen(
                 if (currentFlag != null && currentEpisode != null) {
                     playerManager?.stop()
                     playerManager?.clearMediaItems()
-                    val key = VodConfig.get().getHome().getKey()
+                    val key = VodConfig.get().getHome()?.getKey() ?: ""
                     siteViewModel.playerContent(key, currentFlag.getFlag(), currentEpisode.getUrl())
                 }
                 showParseDialog = false
@@ -1259,7 +1259,7 @@ fun VideoScreen(
             isLoading = isLoading,
             onReceive = {
                 // 接收投屏（对应 Java 原版 onReceiveCast）
-                if (VodConfig.get().getConfig().equals(event.config())) {
+                if (VodConfig.get().getConfig()?.equals(event.config()) == true) {
                     // 配置相同，直接播放
                     VideoActivity.cast(context as Activity, history.save(VodConfig.getCid()))
                     showReceiveDialog = false
@@ -1290,7 +1290,7 @@ fun VideoScreen(
  */
 private fun getHistoryKey(vodId: String): String {
     val cid = VodConfig.getCid()
-    return "${VodConfig.get().getHome().getKey()}$$vodId$$cid"
+    return "${VodConfig.get().getHome()?.getKey() ?: ""}$$vodId$$cid"
 }
 
 /**
@@ -1300,7 +1300,7 @@ private fun createKeep(vod: Vod?, vodId: String) {
     if (vod == null) return
     val keep = Keep()
     keep.setKey(getHistoryKey(vodId))
-    keep.setSiteName(VodConfig.get().getHome().getName())
+    keep.setSiteName(VodConfig.get().getHome()?.getName() ?: "")
     keep.setVodName(vod.getName())
     keep.setVodPic(vod.getPic())
     keep.save()
@@ -1326,7 +1326,7 @@ private fun onFlagSelected(
         history?.setVodFlag(flag.getFlag())
         history?.setVodRemarks(episode.getName())
         // 发起播放请求
-        val key = VodConfig.get().getHome().getKey()
+        val key = VodConfig.get().getHome()?.getKey() ?: ""
         siteViewModel.playerContent(key, flag.getFlag(), episode.getUrl())
     }
 }
@@ -1344,7 +1344,7 @@ private fun onEpisodeSelected(
     history?.setVodRemarks(episode.getName())
     history?.setEpisodeUrl(episode.getUrl())
     // 发起播放请求
-    val key = VodConfig.get().getHome().getKey()
+    val key = VodConfig.get().getHome()?.getKey() ?: ""
     val flagName = flag?.getFlag() ?: ""
     siteViewModel.playerContent(key, flagName, episode.getUrl())
 }
