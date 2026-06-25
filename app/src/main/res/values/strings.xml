@@ -179,6 +179,12 @@
     <string name="dialog_config_hint">Please enter the config…</string>
     <string name="dialog_config_name">Please enter the name…</string>
     <string name="dialog_config_url">Please enter the url…</string>
+    <string name="dialog_name">Name</string>
+    <string name="dialog_choose">Choose file</string>
+    <string name="dialog_input_link">Enter link</string>
+    <string name="dialog_delete_record">Delete record</string>
+    <string name="dialog_delete_history">Are you sure to delete all history?</string>
+    <string name="dialog_delete_keep">Are you sure to delete all favorites?</string>
 
     <!-- Error -->
     <string name="error_config_get">Configuration get failed</string>

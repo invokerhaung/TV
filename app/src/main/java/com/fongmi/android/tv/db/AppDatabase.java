@@ -89,6 +89,19 @@ public abstract class AppDatabase extends RoomDatabase {
         if (items.size() > 7) for (int i = 7; i < items.size(); i++) Path.clear(items.get(i));
     }
 
+    /**
+     * 获取备份文件列表
+     * 对应 RestoreAdapter.addAll()
+     */
+    public static List<File> getRestoreFiles() {
+        List<File> items = new ArrayList<>();
+        File[] files = Path.tv().listFiles();
+        if (files == null) files = new File[0];
+        for (File file : files) if (file.getName().startsWith("tv") && file.getName().endsWith(".bk.gz")) items.add(file);
+        if (!items.isEmpty()) items.sort((f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+        return items;
+    }
+
     private static AppDatabase create(Context context) {
         return Room.databaseBuilder(context, AppDatabase.class, NAME)
                 .addMigrations(Migrations.MIGRATION_30_31)
