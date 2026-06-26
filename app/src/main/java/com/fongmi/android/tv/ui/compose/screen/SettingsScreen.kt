@@ -73,9 +73,7 @@ fun SettingsScreen(
     var isIncognito by remember { mutableStateOf(Setting.isIncognito()) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
+        modifier = Modifier.fillMaxSize()
     ) {
         // Toolbar
         Row(

@@ -42,8 +42,8 @@ fun ConfigDialog(
     onDismiss: () -> Unit,
     onFileChoose: (() -> Unit)? = null
 ) {
-    var name by remember { mutableStateOf(config.getName()) }
-    var url by remember { mutableStateOf(config.getUrl()) }
+    var name by remember { mutableStateOf(config.getName() ?: "") }
+    var url by remember { mutableStateOf(config.getUrl() ?: "") }
     var append by remember { mutableStateOf(true) }
 
     // 使用字符串资源（对应 Java 原版 R.string.setting_vod 等）

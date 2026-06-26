@@ -239,9 +239,7 @@ fun VideoScreen(
     val currentFlags = currentVod?.getFlags() ?: emptyList()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
+        modifier = Modifier.fillMaxSize()
     ) {
         // Toolbar
         Row(

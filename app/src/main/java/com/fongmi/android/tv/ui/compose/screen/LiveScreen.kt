@@ -105,9 +105,7 @@ fun LiveScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
+        modifier = Modifier.fillMaxSize()
     ) {
         // Toolbar
         Row(

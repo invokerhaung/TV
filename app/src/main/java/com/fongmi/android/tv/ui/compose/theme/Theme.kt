@@ -67,8 +67,8 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun TVTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = true,  // 默认使用深色主题
+    dynamicColor: Boolean = false,  // 禁用动态颜色，使用我们定义的颜色
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
