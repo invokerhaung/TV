@@ -32,6 +32,16 @@ import java.util.Objects;
 import okhttp3.Call;
 import okhttp3.Response;
 
+/**
+ * SiteApi - Spider 调用封装层
+ *
+ * 职责：
+ * 1. 封装 Spider 方法调用，统一处理 type=3（Spider模式）和 type=1/4（API模式）
+ * 2. 处理调用结果的解析和转换
+ * 3. 提供调试日志
+ *
+ * 调用链：UI → ViewModel → SiteApi → Spider 方法
+ */
 public class SiteApi {
 
     public static final String PUSH = "push_agent";
@@ -52,13 +62,24 @@ public class SiteApi {
         return type == 0 ? "videolist" : "detail";
     }
 
+    /**
+     * 获取首页内容
+     *
+     * 调用链：SiteViewModel.homeContent() → SiteApi.homeContent(site)
+     *
+     * 对于 type=3 的站点：
+     * 1. 获取 Spider 实例：site.recent().spider()
+     * 2. 调用 spider.homeContent(true) 获取分类和筛选
+     * 3. 调用 spider.homeVideoContent() 获取推荐视频
+     * 4. 合并结果返回
+     */
     @NonNull
     public static Result homeContent(@NonNull Site site) throws Exception {
         if (isSpider(site)) {
             Spider spider = site.recent().spider();
             boolean crash = Prefers.getBoolean("crash");
-            String home = crash ? "" : spider.homeContent(true);
-            String video = crash ? "" : spider.homeVideoContent();
+            String home = crash ? "" : spider.homeContent(true);      // 获取分类+筛选
+            String video = crash ? "" : spider.homeVideoContent();    // 获取推荐视频
             Prefers.put("crash", false);
             SpiderDebug.log("home", home);
             SpiderDebug.log("homeVideo", video);
@@ -87,6 +108,12 @@ public class SiteApi {
         }
     }
 
+    /**
+     * 获取分类下的视频列表
+     *
+     * 调用链：SiteViewModel.categoryContent() → SiteApi.categoryContent()
+     * → site.recent().spider().categoryContent(tid, page, filter, extend)
+     */
     @NonNull
     public static Result categoryContent(@NonNull String key, @NonNull String tid, @NonNull String page, boolean filter, @NonNull HashMap<String, String> extend) throws Exception {
         SpiderDebug.log("category", "key=%s,tid=%s,page=%s,filter=%s,extend=%s", key, tid, page, filter, extend);
@@ -108,6 +135,12 @@ public class SiteApi {
         }
     }
 
+    /**
+     * 获取视频详情
+     *
+     * 调用链：SiteViewModel.detailContent() → SiteApi.detailContent()
+     * → site.recent().spider().detailContent(Arrays.asList(id))
+     */
     @NonNull
     public static Result detailContent(@NonNull String key, @NonNull String id) throws Exception {
         SpiderDebug.log("detail", "key=%s,id=%s", key, id);
@@ -139,6 +172,12 @@ public class SiteApi {
         }
     }
 
+    /**
+     * 获取播放地址
+     *
+     * 调用链：SiteViewModel.playerContent() → SiteApi.playerContent()
+     * → site.recent().spider().playerContent(flag, id, flags)
+     */
     @NonNull
     public static Result playerContent(@NonNull String key, @NonNull String flag, @NonNull String id) throws Exception {
         SpiderDebug.log("player", "key=%s,flag=%s,id=%s", key, flag, id);
@@ -185,6 +224,12 @@ public class SiteApi {
         }
     }
 
+    /**
+     * 搜索视频
+     *
+     * 调用链：SiteViewModel.searchContent() → SearchTask → SiteApi.searchContent()
+     * → site.spider().searchContent(keyword, quick) 或 site.spider().searchContent(keyword, quick, page)
+     */
     @NonNull
     public static Result searchContent(@NonNull Site site, @NonNull String keyword, boolean quick, @NonNull String page) throws Exception {
         SpiderDebug.log("search", "site=%s,keyword=%s,quick=%s,page=%s", site.getName(), keyword, quick, page);

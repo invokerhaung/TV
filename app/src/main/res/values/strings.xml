@@ -117,8 +117,13 @@
 
     <!-- Setting -->
     <string name="setting_vod">Vod</string>
+    <string name="setting_vod_source">Source</string>
     <string name="setting_live">Live</string>
     <string name="setting_wall">Wallpaper</string>
+
+    <!-- Dialog -->
+    <string name="dialog_add_source">Add Source</string>
+    <string name="dialog_source_title">Select Source</string>
     <string name="setting_player">Player setting</string>
     <string name="setting_danmaku">Danmaku setting</string>
     <string name="setting_incognito">Incognito mode</string>

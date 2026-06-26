@@ -70,7 +70,12 @@ public class VodConfig extends BaseConfig {
     }
 
     public VodConfig init() {
-        return config(Config.vod());
+        Config config = Config.vod();
+        if (config.isEmpty()) {
+            config.setUrl("assets://config.json");
+            config.save();
+        }
+        return config(config);
     }
 
     public VodConfig config(Config config) {

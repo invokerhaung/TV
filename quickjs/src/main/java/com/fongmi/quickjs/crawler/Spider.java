@@ -31,15 +31,30 @@ import java.util.concurrent.Future;
 
 import dalvik.system.DexClassLoader;
 
+/**
+ * QuickJS Spider - JavaScript 爬虫桥接实现
+ *
+ * 将 Java 的 Spider 接口方法映射到 QuickJS 中的 JS 函数调用。
+ * 方法名映射：
+ * - homeContent → home
+ * - homeVideoContent → homeVod
+ * - categoryContent → category
+ * - detailContent → detail
+ * - searchContent → search
+ * - playerContent → play
+ * - liveContent → live
+ * - manualVideoCheck → sniffer
+ * - isVideoFormat → isVideo
+ */
 public class Spider extends com.github.catvod.crawler.Spider {
 
-    private final ExecutorService executor;
-    private final DexClassLoader dex;
-    private final String api;
+    private final ExecutorService executor;  // 单线程执行器，保证 QuickJS 线程安全
+    private final DexClassLoader dex;        // 用于加载 Function 扩展
+    private final String api;                // JS 文件路径
 
-    private QuickJSContext ctx;
-    private JSObject jsObject;
-    private boolean cat;
+    private QuickJSContext ctx;  // QuickJS 上下文
+    private JSObject jsObject;   // JS Spider 对象
+    private boolean cat;         // 是否为 catvod 格式（__jsEvalReturn）
 
     public Spider(String api, DexClassLoader dex) {
         this.executor = Executors.newSingleThreadExecutor();
@@ -55,59 +70,70 @@ public class Spider extends com.github.catvod.crawler.Spider {
         return submit(() -> Async.run(jsObject, func, args)).get().get();
     }
 
+    /** 初始化：调用 JS 的 init(ext) */
     @Override
     public void init(Context context, String extend) throws Exception {
         initializeJS();
         call("init", submit(() -> getExt(extend)).get());
     }
 
+    /** 首页分类：Java homeContent → JS home */
     @Override
     public String homeContent(boolean filter) throws Exception {
         return (String) call("home", filter);
     }
 
+    /** 首页推荐：Java homeVideoContent → JS homeVod */
     @Override
     public String homeVideoContent() throws Exception {
         return (String) call("homeVod");
     }
 
+    /** 分类列表：Java categoryContent → JS category */
     @Override
     public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) throws Exception {
         JSObject obj = submit(() -> JSUtil.toObject(ctx, extend)).get();
         return (String) call("category", tid, pg, filter, obj);
     }
 
+    /** 视频详情：Java detailContent → JS detail（只传第一个 ID） */
     @Override
     public String detailContent(List<String> ids) throws Exception {
         return (String) call("detail", ids.get(0));
     }
 
+    /** 搜索：Java searchContent → JS search */
     @Override
     public String searchContent(String key, boolean quick) throws Exception {
         return (String) call("search", key, quick);
     }
 
+    /** 搜索（带分页）：Java searchContent → JS search */
     @Override
     public String searchContent(String key, boolean quick, String pg) throws Exception {
         return (String) call("search", key, quick, pg);
     }
 
+    /** 播放地址：Java playerContent → JS play */
     @Override
     public String playerContent(String flag, String id, List<String> vipFlags) throws Exception {
         JSArray array = submit(() -> JSUtil.toArray(ctx, vipFlags)).get();
         return (String) call("play", flag, id, array);
     }
 
+    /** 直播源：Java liveContent → JS live */
     @Override
     public String liveContent(String url) throws Exception {
         return (String) call("live", url);
     }
 
+    /** 视频嗅探：Java manualVideoCheck → JS sniffer */
     @Override
     public boolean manualVideoCheck() throws Exception {
         return (Boolean) call("sniffer");
     }
 
+    /** 视频格式：Java isVideoFormat → JS isVideo */
     @Override
     public boolean isVideoFormat(String url) throws Exception {
         return (Boolean) call("isVideo", url);
@@ -147,20 +173,32 @@ public class Spider extends com.github.catvod.crawler.Spider {
         }).get();
     }
 
+    /**
+     * 初始化 QuickJS 环境（在单线程执行器中运行）
+     * 分三步：创建上下文 → 注入全局函数 → 加载 JS 模块
+     */
     private void initializeJS() throws Exception {
         submit(() -> {
-            createCtx();
-            createFun();
-            createObj();
+            createCtx();  // 1. 创建上下文和基础环境
+            createFun();  // 2. 注入全局函数
+            createObj();  // 3. 加载 JS 模块并创建 Spider 对象
             return null;
         }).get();
     }
 
+    /**
+     * 创建 QuickJS 上下文并注入基础环境
+     * - console：日志输出
+     * - http.js：网络请求函数（req/http）
+     * - local：本地存储
+     * - 模块加载器：支持 JS 模块导入
+     */
     private void createCtx() {
         ctx = QuickJSContext.create();
         ctx.setConsole(new Console());
-        ctx.evaluate(Asset.read("js/lib/http.js"));
-        ctx.getGlobalObject().setProperty("local", Local.class);
+        ctx.evaluate(Asset.read("js/lib/http.js"));  // 注入 HTTP 请求函数
+        ctx.getGlobalObject().setProperty("local", Local.class);  // 注入本地存储
+        // 设置模块加载器，支持 import 语法
         ctx.setModuleLoader(new QuickJSContext.BytecodeModuleLoader() {
             @Override
             public String moduleNormalizeName(String baseModuleName, String moduleName) {
@@ -174,6 +212,11 @@ public class Spider extends com.github.catvod.crawler.Spider {
         });
     }
 
+    /**
+     * 注入全局函数
+     * - Global 类提供：s2t/t2s/getProxy/js2Proxy/setTimeout/req/_http/加密函数等
+     * - 尝试加载 jar 中的 com.github.catvod.js.Function 扩展
+     */
     private void createFun() {
         try {
             Global.create(ctx, executor);
@@ -183,14 +226,21 @@ public class Spider extends com.github.catvod.crawler.Spider {
         }
     }
 
+    /**
+     * 加载 JS 模块并创建 Spider 对象
+     * 1. 从网络/assets 读取 JS 文件
+     * 2. 判断是否 catvod 格式（包含 __jsEvalReturn）
+     * 3. 执行 JS 模块
+     * 4. 执行 spider.js 桥接脚本，创建 __JS_SPIDER__ 对象
+     */
     private void createObj() {
         String spider = "__JS_SPIDER__";
         String global = "globalThis." + spider;
-        String content = Module.get().fetch(api);
-        cat = content.contains("__jsEvalReturn");
-        ctx.evaluateModule(content.replace(spider, global), api);
-        ctx.evaluateModule(String.format(Asset.read("js/lib/spider.js"), api));
-        jsObject = (JSObject) ctx.getProperty(ctx.getGlobalObject(), spider);
+        String content = Module.get().fetch(api);  // 获取 JS 文件内容
+        cat = content.contains("__jsEvalReturn");  // 判断是否 catvod 格式
+        ctx.evaluateModule(content.replace(spider, global), api);  // 执行 JS 模块
+        ctx.evaluateModule(String.format(Asset.read("js/lib/spider.js"), api));  // 执行桥接脚本
+        jsObject = (JSObject) ctx.getProperty(ctx.getGlobalObject(), spider);  // 获取 Spider 对象
     }
 
     private Object getExt(String ext) {
